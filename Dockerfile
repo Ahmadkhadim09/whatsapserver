@@ -18,6 +18,9 @@ COPY . .
 # Puppeteer image already has PUPPETEER_SKIP_DOWNLOAD set and Chrome installed at a known path
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
+# Give the non-root user ownership of the app directory so it can create the session folder
+RUN mkdir -p /app/session && chown -R pptruser:pptruser /app
+
 # Switch back to the non-root user provided by the base image for safety
 USER pptruser
 
