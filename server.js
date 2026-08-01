@@ -10,10 +10,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT, 10) || 3000;
 const NOTIFY_NUMBER = process.env.NOTIFY_NUMBER || "923139401824";
-const SESSION_PATH = process.env.SESSION_PATH || "/app/session";
-const PUPPETEER_EXECUTABLE_PATH = process.env.PUPPETEER_EXECUTABLE_PATH;
+const SESSION_PATH = process.env.SESSION_PATH?.trim() || "/app/session";
+const PUPPETEER_EXECUTABLE_PATH = process.env.PUPPETEER_EXECUTABLE_PATH?.trim();
 
 let isClientReady = false;
 
