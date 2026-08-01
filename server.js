@@ -1,23 +1,21 @@
 // server.js
-// Self-hosted WhatsApp sender using whatsapp-web.js
-// Run this on an always-on host (Railway, Render, VPS, etc.) — NOT Vercel/Netlify serverless.
 
-const express = require('express');
-const cors = require('cors');
-const qrcode = require('qrcode-terminal');
-const { Client, LocalAuth } = require('whatsapp-web.js');
+const express = require("express");
+const cors = require("cors");
+const qrcode = require("qrcode-terminal");
+const { Client, LocalAuth } = require("whatsapp-web.js");
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
-
-// Your own WhatsApp number to receive form notifications, in international
-// format without '+' (e.g. 923139401824)
-const NOTIFY_NUMBER = process.env.NOTIFY_NUMBER || '923139401824';
+const PORT = process.env.PORT || 8080;
+const NOTIFY_NUMBER = process.env.NOTIFY_NUMBER || "923139401824";
 
 let isClientReady = false;
+
+console.log("Using session path: /tmp/session");
 
 const client = new Client({
     authStrategy: new LocalAuth({
@@ -27,57 +25,80 @@ const client = new Client({
         headless: true,
         args: [
             "--no-sandbox",
-            "--disable-setuid-sandbox"
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage"
         ]
     }
 });
 
-client.on('qr', (qr) => {
-  console.log('Scan this QR code with WhatsApp (Linked Devices > Link a Device):');
-  qrcode.generate(qr, { small: true });
+client.on("qr", (qr) => {
+    console.log("Scan this QR code:");
+    qrcode.generate(qr, { small: true });
 });
 
-client.on('ready', () => {
-  isClientReady = true;
-  console.log('WhatsApp client is ready.');
+client.on("ready", () => {
+    isClientReady = true;
+    console.log("WhatsApp client is ready.");
 });
 
-client.on('disconnected', (reason) => {
-  isClientReady = false;
-  console.log('WhatsApp client disconnected:', reason);
+client.on("disconnected", (reason) => {
+    isClientReady = false;
+    console.log("Disconnected:", reason);
+});
+
+client.on("auth_failure", (msg) => {
+    console.error("Authentication failed:", msg);
 });
 
 client.initialize();
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ ready: isClientReady });
+app.get("/health", (req, res) => {
+    res.json({
+        ready: isClientReady
+    });
 });
 
-// Main endpoint your portfolio form will call
-app.post('/send-whatsapp', async (req, res) => {
-  if (!isClientReady) {
-    return res.status(503).json({ error: 'WhatsApp client not ready yet. Try again shortly.' });
-  }
+app.post("/send-whatsapp", async (req, res) => {
+    if (!isClientReady) {
+        return res.status(503).json({
+            error: "WhatsApp client not ready."
+        });
+    }
 
-  const { name, email, subject, message } = req.body || {};
+    const { name, email, subject, message } = req.body;
 
-  if (!name || !message) {
-    return res.status(400).json({ error: 'Name and message are required.' });
-  }
+    if (!name || !message) {
+        return res.status(400).json({
+            error: "Name and message are required."
+        });
+    }
 
-  const text = `New Portfolio Message\nName: ${name}\nEmail: ${email || 'N/A'}\nSubject: ${subject || 'N/A'}\nMessage: ${message}`;
-  const chatId = `${NOTIFY_NUMBER}@c.us`;
+    const text =
+`📩 New Portfolio Message
 
-  try {
-    await client.sendMessage(chatId, text);
-    return res.status(200).json({ success: true });
-  } catch (err) {
-    console.error('Send failed:', err);
-    return res.status(500).json({ error: 'Failed to send WhatsApp message.', details: err.message });
-  }
+👤 Name: ${name}
+📧 Email: ${email || "N/A"}
+📝 Subject: ${subject || "N/A"}
+
+💬 Message:
+${message}`;
+
+    try {
+        await client.sendMessage(`${NOTIFY_NUMBER}@c.us`, text);
+
+        res.json({
+            success: true
+        });
+    } catch (err) {
+        console.error(err);
+
+        res.status(500).json({
+            success: false,
+            error: err.message
+        });
+    }
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
