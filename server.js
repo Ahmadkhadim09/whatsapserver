@@ -10,16 +10,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 const NOTIFY_NUMBER = process.env.NOTIFY_NUMBER || "923139401824";
+const SESSION_PATH = process.env.SESSION_PATH || "/app/session";
 
 let isClientReady = false;
 
-console.log("Using session path: /tmp/session");
+console.log(`Using session path: ${SESSION_PATH}`);
 
 const client = new Client({
     authStrategy: new LocalAuth({
-        dataPath: "/tmp/session"
+        dataPath: SESSION_PATH
     }),
     puppeteer: {
         headless: true,
