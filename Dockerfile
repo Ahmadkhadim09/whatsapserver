@@ -11,8 +11,6 @@ RUN npm install
 
 COPY . .
 
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
-
 RUN mkdir -p /app/session
 
 EXPOSE 3000
