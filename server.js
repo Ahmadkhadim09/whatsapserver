@@ -20,16 +20,16 @@ const NOTIFY_NUMBER = process.env.NOTIFY_NUMBER || '923139401824';
 let isClientReady = false;
 
 const client = new Client({
-  authStrategy: new LocalAuth({ dataPath: './session' }), // persists login across restarts
-  puppeteer: {
-    headless: true,
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-    ],
-  },
+    authStrategy: new LocalAuth({
+        dataPath: "/tmp/session"
+    }),
+    puppeteer: {
+        headless: true,
+        args: [
+            "--no-sandbox",
+            "--disable-setuid-sandbox"
+        ]
+    }
 });
 
 client.on('qr', (qr) => {
